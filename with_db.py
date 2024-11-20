@@ -32,7 +32,7 @@ def login():
         else:
             print("Invalid email or password.")
             return None
-        
+
 def quiz_option():
     with db_connect() as conn:
         cursor = conn.cursor()
@@ -41,6 +41,10 @@ def quiz_option():
 
 def quiz(user_id):
     quizzes = quiz_option()
+
+    if not quizzes:
+        print("No quizzes available.")
+        return
 
     print("\nAvailable Quizzes:")
     for idx, (quiz_id, name) in enumerate(quizzes, start=1):
@@ -55,7 +59,7 @@ def quiz(user_id):
 
     with db_connect() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT question, options, answer FROM quiz_questions WHERE quiz_id = ?", (quiz_id,))
+        cursor.execute("SELECT question, options, correct_answer FROM quiz_questions WHERE quiz_id = ?", (quiz_id,))
         questions = cursor.fetchall()
 
         if not questions:
@@ -63,18 +67,19 @@ def quiz(user_id):
             return
 
         score = 0
-        for question, options, answer in questions:
+        for question, options, correct_answer in questions:
             print(f"\n{question}")
-            options = options.split(",")  # Assuming options stored as "A,B,C,D"
-            for idx, opt in enumerate(options, start=1):
-                print(f"{idx}. {opt}")
+            options_list = options.split(",")  # Assuming options stored as "A,B,C,D"
+            for idx, opt in enumerate(options_list, start=1):
+                print(f"{idx}. {opt.strip()}")
 
-            user_answer = input("Your answer: ").strip()
+            user_answer = input("Your answer (enter the option number): ").strip()
             try:
-                if options[int(user_answer) - 1] == answer:
+                if options_list[int(user_answer) - 1].strip() == correct_answer.strip():
                     score += 1
             except (IndexError, ValueError):
                 print("Invalid answer.")
+
         print("\n\n")
         print(f"You scored {score}/{len(questions)}!")
         print("\n\n")
